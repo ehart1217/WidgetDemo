@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int REQUEST_PICK_APPWIDGET = 1;
     private static final int APPWIDGET_HOST_ID = 2;
@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private AppWidgetManager mAppWidgetManager;
     private ViewGroup mContainer;//widget容器
     private View mChooseBtn;
+    private View mClearBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private void findWidget() {
         mContainer = (ViewGroup) findViewById(R.id.activity_widget_container);
         mChooseBtn = findViewById(R.id.activity_choose_widget_btn);
+        mClearBtn = findViewById(R.id.activity_clear_widget_btn);
     }
 
     private void initWidget() {
@@ -44,18 +46,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addListener() {
-        mChooseBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectWidget();
-            }
-        });
+        mChooseBtn.setOnClickListener(this);
+        mClearBtn.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        int id = v.getId();
+        if (id == R.id.activity_choose_widget_btn) {
+            selectWidget();
+        } else if (id == R.id.activity_clear_widget_btn) {
+            clearWidget();
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        mAppWidgetHost.startListening();
+        mAppWidgetHost.startListening();//set to listen the change of widget
     }
 
     @Override
@@ -115,6 +123,17 @@ public class MainActivity extends AppCompatActivity {
         } else {
             createWidget(data);
         }
+    }
+
+    private void clearWidget() {
+        int viewCount = mContainer.getChildCount();
+        for (int i = 0; i < viewCount; i++) {
+            View widgetView = mContainer.getChildAt(i);
+            if (widgetView instanceof AppWidgetHostView) {
+                mAppWidgetHost.deleteAppWidgetId(((AppWidgetHostView) widgetView).getAppWidgetId());
+            }
+        }
+        mContainer.removeAllViews();
     }
 
     private void createWidget(Intent data) {

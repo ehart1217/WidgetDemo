@@ -6,12 +6,24 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Button
-        android:id="@+id/activity_choose_widget_btn"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="choose a widget" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/activity_choose_widget_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="choose a widget" />
+
+        <Button
+            android:id="@+id/activity_clear_widget_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="clear widget"/>
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/activity_widget_container"
