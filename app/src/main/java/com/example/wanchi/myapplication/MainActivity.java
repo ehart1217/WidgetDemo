@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -23,6 +24,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ViewGroup mContainer;//widget容器
     private View mChooseBtn;
     private View mClearBtn;
+    private View mScaleBtn;
+    private View mMinusBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,10 +40,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mContainer = (ViewGroup) findViewById(R.id.activity_widget_container);
         mChooseBtn = findViewById(R.id.activity_choose_widget_btn);
         mClearBtn = findViewById(R.id.activity_clear_widget_btn);
+        mScaleBtn = findViewById(R.id.activity_scale_btn);
+        mMinusBtn = findViewById(R.id.activity_minus_btn);
     }
 
     private void initWidget() {
-        mContainer = (ViewGroup) findViewById(R.id.activity_widget_container);
         mAppWidgetManager = AppWidgetManager.getInstance(this);
         mAppWidgetHost = new AppWidgetHost(this, APPWIDGET_HOST_ID);
     }
@@ -48,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void addListener() {
         mChooseBtn.setOnClickListener(this);
         mClearBtn.setOnClickListener(this);
+        mScaleBtn.setOnClickListener(this);
+        mMinusBtn.setOnClickListener(this);
     }
 
     @Override
@@ -57,7 +63,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             selectWidget();
         } else if (id == R.id.activity_clear_widget_btn) {
             clearWidget();
+        } else if (id == R.id.activity_scale_btn) {
+            scaleContainer(1.2f);
+        } else if (id == R.id.activity_minus_btn) {
+            scaleContainer(0.8f);
         }
+    }
+
+    private void scaleContainer(float scalePercent) {
+        ViewGroup.LayoutParams lp = mContainer.getLayoutParams();
+        lp.height *= scalePercent;
+        lp.width *= scalePercent;
+        mContainer.setLayoutParams(lp);
     }
 
     @Override
@@ -74,11 +91,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     private void selectWidget() {
-        int appWidgetId = this.mAppWidgetHost.allocateAppWidgetId();
-        Intent pickIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_PICK);
-        pickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        addEmptyData(pickIntent);
-        startActivityForResult(pickIntent, REQUEST_PICK_APPWIDGET);
+//        int appWidgetId = this.mAppWidgetHost.allocateAppWidgetId();
+//        Intent pickIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_PICK);
+//        pickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+//        addEmptyData(pickIntent);
+//        startActivityForResult(pickIntent, REQUEST_PICK_APPWIDGET);
+        startActivity(new Intent(this, ChooseWidgetActivity.class));
     }
 
     private void addEmptyData(Intent pickIntent) {
@@ -123,6 +141,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             createWidget(data);
         }
+    }
+
+    private void findAllWidget() {
+        List<AppWidgetProviderInfo> appWidgetProviderInfoList = mAppWidgetManager.getInstalledProviders();
+
     }
 
     private void clearWidget() {
