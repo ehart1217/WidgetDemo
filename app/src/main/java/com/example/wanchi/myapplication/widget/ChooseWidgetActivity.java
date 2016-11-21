@@ -1,4 +1,4 @@
-package com.example.wanchi.myapplication;
+package com.example.wanchi.myapplication.widget;
 
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
@@ -6,11 +6,12 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.example.wanchi.myapplication.R;
 
 import java.util.List;
 
