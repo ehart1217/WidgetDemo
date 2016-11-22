@@ -1,51 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <LinearLayout
+    <Button
+        android:id="@+id/gallery"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:text="Gallery" />
 
-        <Button
-            android:id="@+id/activity_choose_widget_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="choose" />
-
-        <Button
-            android:id="@+id/activity_clear_widget_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="clear"/>
-
-        <Button
-            android:id="@+id/activity_scale_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="+"/>
-
-        <Button
-            android:id="@+id/activity_minus_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="-"/>
-    </LinearLayout>
     <Button
-       android:id="@+id/activity_choose_custom_btn"
-        android:layout_width="wrap_content"
+        android:id="@+id/activity_navigate_to_widgets"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="choose custom"/>
+        android:text="widgets" />
 
-    <LinearLayout
-        android:id="@+id/activity_widget_container"
-        android:layout_width="350dp"
-        android:layout_height="1000dp"
-        android:orientation="vertical" />
+    <Button
+        android:id="@+id/activity_navigate_to_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="grid" />
 </LinearLayout>

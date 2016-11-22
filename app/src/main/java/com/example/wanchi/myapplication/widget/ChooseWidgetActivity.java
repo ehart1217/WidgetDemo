@@ -1,4 +1,4 @@
-package com.example.wanchi.myapplication;
+package com.example.wanchi.myapplication.widget;
 
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
@@ -7,7 +7,6 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -16,6 +15,8 @@ import android.widget.Toast;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import com.example.wanchi.myapplication.R;
+
 import java.util.List;
 
 /**
@@ -113,8 +114,7 @@ public class ChooseWidgetActivity extends AppCompatActivity implements View.OnCl
                 } catch (NoSuchMethodException e) {
                     e.printStackTrace();
                 }
-                boolean success = mAppWidgetManager.bindAppWidgetIdIfAllowed(widgetId, currentWidgetInfo.provider);
-                Toast.makeText(this, "权限通过：" + success, Toast.LENGTH_SHORT).show();
+                mAppWidgetManager.bindAppWidgetIdIfAllowed(widgetId, currentWidgetInfo.provider);
             }
 
             mContainer.addView(createDivider());

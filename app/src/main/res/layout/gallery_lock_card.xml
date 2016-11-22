@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+ app:cardElevation="6dp"
+    app:cardMaxElevation="12dp"
+-->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/cardView"
+        android:layout_width="236dp"
+        android:layout_height="420dp"
+        android:layout_centerHorizontal="true"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="1dp"
+        app:cardUseCompatPadding="true">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:scaleType="fitXY" />
+
+    </android.support.v7.widget.CardView>
+
+    <Button
+        android:id="@+id/set_lockpage_btn"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_below="@+id/cardView"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="15dp"
+        android:background="@mipmap/button" />
+
+    <TextView
+        android:id="@+id/set_lockpage_tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/set_lockpage_btn"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="3dp"
+        android:text="锁屏壁纸" />
+</RelativeLayout>
