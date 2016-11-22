@@ -1,4 +1,4 @@
-package com.example.wanchi.myapplication.gallery.adapter;
+package com.example.wanchi.myapplication.gallery;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,6 +10,7 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.example.wanchi.myapplication.R;
+import com.example.wanchi.myapplication.gallery.adapter.CardAdapter;
 
 
 public class CardSohuFragment extends BaseCardFragment {

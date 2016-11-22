@@ -1,4 +1,4 @@
-package com.example.wanchi.myapplication.gallery.adapter;
+package com.example.wanchi.myapplication.gallery;
 
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.CardView;

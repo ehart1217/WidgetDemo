@@ -6,6 +6,11 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v7.widget.CardView;
 import android.view.ViewGroup;
 
+import com.example.wanchi.myapplication.gallery.BaseCardFragment;
+import com.example.wanchi.myapplication.gallery.CardLockFragment;
+import com.example.wanchi.myapplication.gallery.CardSohuFragment;
+import com.example.wanchi.myapplication.gallery.CardWidgetFragment;
+
 import java.util.ArrayList;
 import java.util.List;
 
