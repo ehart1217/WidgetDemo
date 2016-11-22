@@ -20,8 +20,16 @@ public class GalleryMain extends AppCompatActivity implements View.OnClickListen
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery_main);
-        showHubGallery = (Button) findViewById(R.id.showHubGallery);
+        initView();
+        setListener();
+    }
 
+
+    private void initView() {
+        showHubGallery = (Button) findViewById(R.id.showHubGallery);
+    }
+
+    private void setListener() {
         showHubGallery.setOnClickListener(this);
     }
 
