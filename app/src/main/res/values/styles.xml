@@ -11,4 +11,6 @@
     <style name="AppThemeFullScreen" parent="Theme.AppCompat.NoActionBar">
         <item name="android:background">@color/black</item>
     </style>
+
+
 </resources>
