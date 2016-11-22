@@ -43,7 +43,7 @@ public class CardViewPagerAdapter extends PagerAdapter implements CardAdapter{
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
         View view = LayoutInflater.from(container.getContext())
-                .inflate(R.layout.gallery_item_card, container, false);
+                .inflate(R.layout.gallery_lock_card, container, false);
         container.addView(view);
         CardView cardView = (CardView) view.findViewById(R.id.cardView);
         ImageView imageView = (ImageView) view.findViewById(R.id.imageView);
