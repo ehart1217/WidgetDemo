@@ -15,13 +15,13 @@
             android:id="@+id/activity_choose_widget_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="choose a widget" />
+            android:text="choose" />
 
         <Button
             android:id="@+id/activity_clear_widget_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="clear widget"/>
+            android:text="clear"/>
 
         <Button
             android:id="@+id/activity_scale_btn"
@@ -37,11 +37,15 @@
             android:padding="10dp"
             android:text="-"/>
     </LinearLayout>
+    <Button
+       android:id="@+id/activity_choose_custom_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="choose custom"/>
 
     <LinearLayout
         android:id="@+id/activity_widget_container"
         android:layout_width="350dp"
         android:layout_height="1000dp"
-        android:background="@android:color/white"
         android:orientation="vertical" />
 </LinearLayout>

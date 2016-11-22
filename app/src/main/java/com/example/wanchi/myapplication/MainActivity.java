@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private View mClearBtn;
     private View mScaleBtn;
     private View mMinusBtn;
+    private View mChooseCustomBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void findWidget() {
         mContainer = (ViewGroup) findViewById(R.id.activity_widget_container);
         mChooseBtn = findViewById(R.id.activity_choose_widget_btn);
+        mChooseCustomBtn = findViewById(R.id.activity_choose_custom_btn);
         mClearBtn = findViewById(R.id.activity_clear_widget_btn);
         mScaleBtn = findViewById(R.id.activity_scale_btn);
         mMinusBtn = findViewById(R.id.activity_minus_btn);
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void addListener() {
         mChooseBtn.setOnClickListener(this);
+        mChooseCustomBtn.setOnClickListener(this);
         mClearBtn.setOnClickListener(this);
         mScaleBtn.setOnClickListener(this);
         mMinusBtn.setOnClickListener(this);
@@ -61,7 +64,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int id = v.getId();
         if (id == R.id.activity_choose_widget_btn) {
             selectWidget();
-        } else if (id == R.id.activity_clear_widget_btn) {
+        } else if(id == R.id.activity_choose_custom_btn){
+            selectCustomWidget();
+        }else if (id == R.id.activity_clear_widget_btn) {
             clearWidget();
         } else if (id == R.id.activity_scale_btn) {
             scaleContainer(1.2f);
@@ -91,14 +96,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     private void selectWidget() {
-//        int appWidgetId = this.mAppWidgetHost.allocateAppWidgetId();
-//        Intent pickIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_PICK);
-//        pickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-//        addEmptyData(pickIntent);
-//        startActivityForResult(pickIntent, REQUEST_PICK_APPWIDGET);
-        startActivity(new Intent(this, ChooseWidgetActivity.class));
+        //点击选择小部件，跳转选择页面。
+        int appWidgetId = this.mAppWidgetHost.allocateAppWidgetId();
+        Intent pickIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_PICK);
+        pickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        addEmptyData(pickIntent);
+        startActivityForResult(pickIntent, REQUEST_PICK_APPWIDGET);
     }
 
+    private void selectCustomWidget() {
+        startActivity(new Intent(this, ChooseWidgetActivity.class));
+    }
     private void addEmptyData(Intent pickIntent) {
         ArrayList<AppWidgetProviderInfo> customInfo =
                 new ArrayList<>();
@@ -114,7 +122,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     Intent data) {
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUEST_PICK_APPWIDGET) {
-                configureWidget(data);
+                //
+                configureWidgetIfNecessary(data); // 可能需要跳转配置页面
             } else if (requestCode == REQUEST_CREATE_APPWIDGET) {
                 createWidget(data);
             }
@@ -127,9 +136,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void configureWidget(Intent data) {
+    private void configureWidgetIfNecessary(Intent data) {
         Bundle extras = data.getExtras();
         int appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
+        // 得到返回的widget info
         AppWidgetProviderInfo appWidgetInfo =
                 mAppWidgetManager.getAppWidgetInfo(appWidgetId);
         if (appWidgetInfo.configure != null) {
@@ -164,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
         AppWidgetProviderInfo appWidgetInfo =
                 mAppWidgetManager.getAppWidgetInfo(appWidgetId);
+        //注意这里，createView以后host会持有一个View的引用。所以View删除的时候必须把host里的引用也删除，否则造成内存泄漏。
         AppWidgetHostView hostView =
                 mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo);
         hostView.setAppWidget(appWidgetId, appWidgetInfo);

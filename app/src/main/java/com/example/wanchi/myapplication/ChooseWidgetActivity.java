@@ -5,13 +5,17 @@ import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -67,7 +71,19 @@ public class ChooseWidgetActivity extends AppCompatActivity implements View.OnCl
 
     @Override
     public void onClick(View v) {
+        int id = v.getId();
+        if (id == R.id.activity_all_widget_scale_btn) {
+            scaleContainer(1.2f);
+        } else if (id == R.id.activity_all_widget_minus_btn) {
+            scaleContainer(0.8f);
+        }
+    }
 
+    private void scaleContainer(float scalePercent) {
+        ViewGroup.LayoutParams lp = mContainer.getLayoutParams();
+        lp.height *= scalePercent;
+        lp.width *= scalePercent;
+        mContainer.setLayoutParams(lp);
     }
 
     private void addAllWidget() {
@@ -75,11 +91,31 @@ public class ChooseWidgetActivity extends AppCompatActivity implements View.OnCl
         int widgetCount = appWidgetProviderInfoList.size();
         for (int i = 0; i < widgetCount; i++) {
             AppWidgetProviderInfo currentWidgetInfo = appWidgetProviderInfoList.get(i);
+
             int widgetId = mAppWidgetHost.allocateAppWidgetId();
 
             AppWidgetHostView hostView =
                     mAppWidgetHost.createView(this, widgetId, currentWidgetInfo);
             hostView.setAppWidget(widgetId, currentWidgetInfo);
+
+            //需要api-16
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                Class clazz = mAppWidgetManager.getClass();
+                try {
+                    Method m1 = clazz.getDeclaredMethod("setBindAppWidgetPermission", String.class, Boolean.class);
+                    try {
+                        m1.invoke(mAppWidgetManager, this.getPackageName(), true);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+                boolean success = mAppWidgetManager.bindAppWidgetIdIfAllowed(widgetId, currentWidgetInfo.provider);
+                Toast.makeText(this, "权限通过：" + success, Toast.LENGTH_SHORT).show();
+            }
 
             mContainer.addView(createDivider());
             mContainer.addView(hostView);
