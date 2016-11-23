@@ -1,11 +1,9 @@
 package com.example.wanchi.myapplication.gallery;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +15,7 @@ import com.bumptech.glide.Glide;
 import com.example.wanchi.myapplication.R;
 import com.example.wanchi.myapplication.gallery.adapter.CardAdapter;
 import com.example.wanchi.myapplication.gallery.photopicker.ImageGridActivity;
-
-import static android.app.Activity.RESULT_OK;
+import com.example.wanchi.myapplication.gallery.photopicker.bean.ImageItem;
 
 
 public class CardLockFragment extends BaseCardFragment implements View.OnClickListener {
@@ -76,7 +73,6 @@ public class CardLockFragment extends BaseCardFragment implements View.OnClickLi
     private void toYotaSelectLockPic() {
         //打开预览
         Intent intentPreview = new Intent(getActivity(), ImageGridActivity.class);
-
         startActivityForResult(intentPreview, REQUEST_CODE_PREVIEW);
     }
 
@@ -95,9 +91,9 @@ public class CardLockFragment extends BaseCardFragment implements View.OnClickLi
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            Uri uri = data.getData();
-            Log.e("uri", uri.toString());
+//        if (resultCode == RESULT_OK) {
+//            Uri uri = data.getData();
+//            Log.e("uri", uri.toString());
 //            ContentResolver cr = getActivity().getContentResolver();
 //            try {
 //                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
@@ -107,7 +103,16 @@ public class CardLockFragment extends BaseCardFragment implements View.OnClickLi
 //            } catch (FileNotFoundException e) {
 //                Log.e("Exception", e.getMessage(),e);
 //            }
-            Glide.with(this).load(uri).into(imageView);
+//            Glide.with(this).load(uri).into(imageView);
+//        }
+        if (requestCode == REQUEST_CODE_PREVIEW && resultCode == 10001) {
+            ImageItem imageItem = (ImageItem) data.getSerializableExtra("imageItem");
+            String path = imageItem.path;
+            String type = imageItem.mimeType;
+            if (type.equals("type_res"))
+                Glide.with(this).load(Integer.parseInt(imageItem.path)).into(imageView);
+            else
+                Glide.with(this).load(path).into(imageView);
         }
         super.onActivityResult(requestCode, resultCode, data);
     }

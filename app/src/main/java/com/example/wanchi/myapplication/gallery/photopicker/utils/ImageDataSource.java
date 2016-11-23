@@ -16,6 +16,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Created by liyuyan on 2016/11/22.
+ */
 public class ImageDataSource implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final int LOADER_ALL = 0;         //加载所有图片
@@ -129,7 +132,9 @@ public class ImageDataSource implements LoaderManager.LoaderCallbacks<Cursor> {
         System.out.println("--------");
     }
 
-    /** 所有图片加载完成的回调接口 */
+    /**
+     * 所有图片加载完成的回调接口
+     */
     public interface OnImagesLoadedListener {
         void onImagesLoaded(List<ImageFolder> imageFolders);
     }

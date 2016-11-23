@@ -12,5 +12,8 @@
         <item name="android:background">@color/black</item>
     </style>
 
+    <style name="AppThemeFullScreenWhite" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:background">@color/white</item>
+    </style>
 
 </resources>

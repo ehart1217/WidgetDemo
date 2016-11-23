@@ -1,6 +1,7 @@
 package com.example.wanchi.myapplication.gallery.photopicker.adapter;
 
 import android.app.Activity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +26,7 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.MyVi
     private int mImageSize;               //每个条目的大小
     private ImagePicker imagePicker;
     private ArrayList<ImageItem> mSelectedImages; //全局保存的已经选中的图片数据
+    private OnImageItemClickListener listener;   //图片被点击的监听
 
     public ImageGridAdapter(ImageGridActivity imageGridActivity, ArrayList<ImageItem> images) {
         mActivity = imageGridActivity;
@@ -44,9 +46,35 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.MyVi
     }
 
     @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
+    public void onBindViewHolder(final MyViewHolder holder, int position) {
         final ImageItem imageItem = mImages.get(position);
-        imagePicker.getImageLoader().displayImage(mActivity, imageItem.path, holder.iv_thumb, 300, 500); //显示图片
+        GridLayoutManager.LayoutParams layoutParams = (GridLayoutManager.LayoutParams) holder.iv_thumb.getLayoutParams();
+        layoutParams.topMargin = 10;
+        layoutParams.bottomMargin = 10;
+        if (position % 2 == 0) {
+            layoutParams.leftMargin = 30;
+            layoutParams.rightMargin = 12;
+
+        } else {
+            layoutParams.leftMargin = 12;
+            layoutParams.rightMargin = 30;
+        }
+        holder.iv_thumb.setLayoutParams(layoutParams);
+        //显示图片
+        if (mImages.get(position).mimeType.equals("type_res"))
+            imagePicker.getImageLoader().displayImageFromRes(mActivity, Integer.parseInt(imageItem.path), holder.iv_thumb, 0, 0);
+        else
+            imagePicker.getImageLoader().displayImage(mActivity, imageItem.path, holder.iv_thumb, 0, 0);
+        // 如果设置了回调，则设置点击事件
+        if (listener != null) {
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int pos = holder.getLayoutPosition();
+                    listener.onImageItemClick(v, imageItem, pos);
+                }
+            });
+        }
     }
 
     @Override
@@ -67,5 +95,13 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.MyVi
             super(itemView);
             iv_thumb = (ImageView) itemView.findViewById(R.id.iv_thumb);
         }
+    }
+
+    public void setOnImageItemClickListener(OnImageItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    public interface OnImageItemClickListener {
+        void onImageItemClick(View view, ImageItem imageItem, int position);
     }
 }

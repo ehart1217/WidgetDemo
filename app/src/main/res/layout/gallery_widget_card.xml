@@ -15,33 +15,35 @@
         android:layout_width="236dp"
         android:layout_height="420dp"
         android:layout_centerHorizontal="true"
-        app:cardCornerRadius="1dp"
         app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="1dp"
         app:cardUseCompatPadding="true">
 
         <ImageView
-            android:layout_margin="1dp"
             android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_margin="1dp"
             android:scaleType="fitXY"/>
 
     </android.support.v7.widget.CardView>
 
     <Button
-        android:layout_margin="15dp"
         android:id="@+id/btn"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:layout_below="@+id/cardView"
         android:layout_centerHorizontal="true"
+        android:layout_margin="15dp"
+        android:layout_marginTop="30dp"
         android:background="@mipmap/button"/>
+
     <TextView
-        android:layout_margin="3dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/btn"
         android:layout_centerHorizontal="true"
+        android:layout_margin="10dp"
         android:text="锁屏壁纸"/>
 
 </RelativeLayout>
