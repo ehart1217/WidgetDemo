@@ -16,6 +16,9 @@ import com.example.wanchi.myapplication.R;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Created by wanchi on 2016/11/17.
+ */
 public class WidgetMainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int REQUEST_PICK_APPWIDGET = 1;
