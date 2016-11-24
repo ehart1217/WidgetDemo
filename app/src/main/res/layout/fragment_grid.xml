@@ -4,9 +4,4 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.example.wanchi.myapplication.widget.CellLayout
-        android:id="@+id/fragment_grid_cell"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
 </LinearLayout>

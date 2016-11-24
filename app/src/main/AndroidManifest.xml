@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.wanchi.myapplication"
-    android:sharedUserId="android.uid.system">
+          package="com.example.wanchi.myapplication">
 
-    <uses-permission android:name="android.permission.BIND_APPWIDGET" />
+    <!--<uses-permission android:name="android.permission.BIND_APPWIDGET" />-->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"></uses-permission>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
 
     <application
         android:allowBackup="true"
@@ -21,13 +22,20 @@
 
         <!--******** gallery  *************-->
         <activity android:name=".gallery.GalleryMain"></activity>
-        <activity android:name=".gallery.GalleyWidgetsActivity"
+        <activity
+            android:name=".gallery.GalleyWidgetsActivity"
             android:theme="@style/AppThemeFullScreen">
         </activity>
         <!--******** Widget   *************-->
         <activity android:name=".widget.WidgetMainActivity">
         </activity>
         <activity android:name=".widget.ChooseWidgetActivity"/>
+        <!--******** photopicker   *************-->
+        <activity
+            android:name=".gallery.photopicker.ImageGridActivity"
+            android:theme="@style/AppThemeFullScreenWhite">
+        </activity>
+
     </application>
 
 </manifest>

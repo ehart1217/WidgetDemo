@@ -1,11 +1,9 @@
 package com.example.wanchi.myapplication.gallery;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,11 +14,13 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.wanchi.myapplication.R;
 import com.example.wanchi.myapplication.gallery.adapter.CardAdapter;
-
-import static android.app.Activity.RESULT_OK;
+import com.example.wanchi.myapplication.gallery.photopicker.ImageGridActivity;
+import com.example.wanchi.myapplication.gallery.photopicker.bean.ImageItem;
 
 
 public class CardLockFragment extends BaseCardFragment implements View.OnClickListener {
+
+    public static final int REQUEST_CODE_PREVIEW = 101;
 
     private ImageView imageView;
     private Button set_lockpage_btn;
@@ -45,27 +45,41 @@ public class CardLockFragment extends BaseCardFragment implements View.OnClickLi
                 * CardAdapter.MAX_ELEVATION_FACTOR);
         imageView = (ImageView) view.findViewById(R.id.imageView);
         set_lockpage_btn = (Button) view.findViewById(R.id.set_lockpage_btn);
-        set_lockpage_tv = (TextView)view. findViewById(R.id.set_lockpage_tv);
+        set_lockpage_tv = (TextView) view.findViewById(R.id.set_lockpage_tv);
     }
 
     private void setListener() {
         set_lockpage_btn.setOnClickListener(this);
         set_lockpage_tv.setOnClickListener(this);
     }
+
     public CardView getCardView() {
         return mCardView;
     }
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.set_lockpage_btn:
-                toSelectLockPic();
+                //toSystemSelectLockPic();
+                toYotaSelectLockPic();
                 break;
         }
     }
 
-    private void toSelectLockPic() {
+    /**
+     * 自定義圖庫
+     */
+    private void toYotaSelectLockPic() {
+        //打开预览
+        Intent intentPreview = new Intent(getActivity(), ImageGridActivity.class);
+        startActivityForResult(intentPreview, REQUEST_CODE_PREVIEW);
+    }
+
+    /**
+     * 系統圖庫
+     */
+    private void toSystemSelectLockPic() {
         Intent intent = new Intent();
                 /* 开启Pictures画面Type设定为image */
         intent.setType("image/*");
@@ -77,9 +91,9 @@ public class CardLockFragment extends BaseCardFragment implements View.OnClickLi
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            Uri uri = data.getData();
-            Log.e("uri", uri.toString());
+//        if (resultCode == RESULT_OK) {
+//            Uri uri = data.getData();
+//            Log.e("uri", uri.toString());
 //            ContentResolver cr = getActivity().getContentResolver();
 //            try {
 //                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
@@ -89,7 +103,16 @@ public class CardLockFragment extends BaseCardFragment implements View.OnClickLi
 //            } catch (FileNotFoundException e) {
 //                Log.e("Exception", e.getMessage(),e);
 //            }
-            Glide.with(this).load(uri).into(imageView);
+//            Glide.with(this).load(uri).into(imageView);
+//        }
+        if (requestCode == REQUEST_CODE_PREVIEW && resultCode == 10001) {
+            ImageItem imageItem = (ImageItem) data.getSerializableExtra("imageItem");
+            String path = imageItem.path;
+            String type = imageItem.mimeType;
+            if (type.equals("type_res"))
+                Glide.with(this).load(Integer.parseInt(imageItem.path)).into(imageView);
+            else
+                Glide.with(this).load(path).into(imageView);
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
