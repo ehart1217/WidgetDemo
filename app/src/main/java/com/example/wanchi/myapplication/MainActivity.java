@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         mGridBtn = findViewById(R.id.activity_navigate_to_grid);
         mGridBtn.setOnClickListener(this);
 
