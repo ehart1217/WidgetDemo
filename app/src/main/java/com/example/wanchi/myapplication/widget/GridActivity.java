@@ -16,7 +16,7 @@ import com.example.wanchi.myapplication.R;
 public class GridActivity extends AppCompatActivity {
 
     public static void navigateTo(Activity activity) {
-        startActivity(new Intent(this, activity.getClass()));
+        activity.startActivity(new Intent(activity, GridActivity.class));
     }
 
     @Override
