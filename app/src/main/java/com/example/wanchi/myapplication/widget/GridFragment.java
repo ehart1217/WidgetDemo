@@ -16,6 +16,7 @@ import com.example.wanchi.myapplication.R;
 public class GridFragment extends Fragment {
 
     public static final String TAG = "GridFragment";
+    private View mCellLayout;
 
     public static GridFragment newInstance() {
 
@@ -30,7 +31,7 @@ public class GridFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_grid, container, false);
-
+        mCellLayout = rootView.findViewById(R.id.fragment_cell_layout);
         return rootView;
     }
 
