@@ -48,6 +48,9 @@
             android:theme="@style/AppThemeFullScreenWhite">
         </activity>
 
+        <!--gridActivity-->
+        <activity android:name=".widget.GridActivity"/>
+
     </application>
 
 </manifest>

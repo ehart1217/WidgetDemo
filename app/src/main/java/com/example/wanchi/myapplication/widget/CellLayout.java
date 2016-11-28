@@ -4,9 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,12 +21,16 @@ import android.widget.Scroller;
 
 import com.example.wanchi.myapplication.utils.DensityUtil;
 
+import java.util.HashMap;
+
 /**
  * 宫格根布局
  * Created by wanchi on 2016/11/24.
  */
 
 public class CellLayout extends ViewGroup implements View.OnLongClickListener {
+
+    private static final String TAG_DRAG = CellLayout.class.getSimpleName();
 
     // 状态
     private int MODE_FREE = 0; //静止状态
@@ -44,8 +50,10 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     private WindowManager mWindowManager;
     private WindowManager.LayoutParams mWindowParams;
 
-    //拖拽Item的子View
-    private ImageView dragImageView;
+    //被选中的view，即被拖动的view的本体（与正在被拖动的view不是同一个）
+    private View mDraggingView;
+    //生成的正在拖拽的view
+    private ImageView mDraggingImageView;
     //拖拽View对应的位图
     private Bitmap mDragBitmap;
     private Context mContext;
@@ -56,17 +64,17 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     //页面滚动的Scroll管理器
     private Scroller mScroller;
 
-    private int mDragOffsetX;
+    private int mDragOffsetX; // drag的偏移量，计算container的相对位置，例如计算状态栏的高度。
     private int mDragOffsetY;
-    private int mDragPosition;
-    private int temChangPosition;
+    private Point mCurrentDragPosition;
+    private Point mDownDragPosition;
 
     private int halfBitmapWidth;
     private int halfBitmapHeight;
     private Rect frame;
 
-    private int colCount = 4;
-    private int rowCount = 6;
+    private int mColumn = 4;
+    private int mRow = 6;
 
     //行间距
     private int rowSpace = 0;
@@ -74,9 +82,9 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     private int colSpace = 0;
 
     //item的宽度
-    private int childWidth = 0;
+    private float mCellWidth = 0;
     //item的高度
-    private int childHeight = 0;
+    private float mCellHeight = 0;
 
     //左边距
     private int leftPadding = 0;
@@ -88,6 +96,10 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     private int bottomPadding = 0;
     private int screenWidth;
     private int screenHeight;
+
+    // 空间被占用情况
+    private boolean[][] mOccupied;
+    private HashMap<Point, View> mViewMap;
 
     public CellLayout(Context context) {
         this(context, null);
@@ -101,18 +113,26 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         super(context, attrs, defStyleAttr);
         mContext = context;
         this.mScroller = new Scroller(context);
+        mOccupied = new boolean[mColumn][mRow];
+        mViewMap = new HashMap<>();
 
         setOnLongClickListener(this);
         addAllChildClickListener(this);
     }
 
 
-    @Override
-    public void addView(View child, int index, LayoutParams params) {
+    public void addCell(View child, Point position) {
         child.setClickable(true);
-        if (child.getVisibility() != View.VISIBLE)
+        CellInfo cellInfo = new CellInfo();
+        cellInfo.cell = child;
+        cellInfo.position = position;
+        child.setTag(cellInfo);
+        mViewMap.put(position, child);
+        if (child.getVisibility() != View.VISIBLE) {
             child.setVisibility(View.VISIBLE);
-        super.addView(child, index, params);
+        }
+        super.addView(child);
+        addAllChildClickListener(this);
     }
 
     @Override
@@ -127,12 +147,12 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
 
         screenWidth = width;
         screenHeight = height;
-        int usedWidth = width - leftPadding - rightPadding - (colCount - 1)
+        int usedWidth = width - leftPadding - rightPadding - (mColumn - 1)
                 * colSpace;
-        int usedheight = ((height - topPadding - bottomPadding - (rowCount - 1)
+        int usedheight = ((height - topPadding - bottomPadding - (mRow - 1)
                 * rowSpace));
-        int childWidth = usedWidth / colCount;
-        int childHeight = usedheight / rowCount;
+        int childWidth = usedWidth / mColumn;
+        int childHeight = usedheight / mRow;
         final int count = getChildCount();
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
@@ -150,20 +170,23 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int childCount = getChildCount();
+
+
+        mCellWidth = getMeasuredWidth() / mColumn;
+        mCellHeight = getMeasuredHeight() / mRow;
+
         for (int i = 0; i < childCount; i++) {
             final View childView = getChildAt(i);
             if (childView.getVisibility() != View.GONE) {
-                childWidth = childView.getMeasuredWidth();
-                childHeight = childView.getMeasuredHeight();
 
-                int row = i / colCount % rowCount;
-                int col = i % colCount;
-                int left = leftPadding + col
-                        * (colSpace + childWidth);
-                int top = topPadding + row * (rowSpace + childHeight);
+                if (childView.getTag() instanceof CellInfo) {
+                    CellInfo cellInfo = (CellInfo) childView.getTag();
+                    int left = (int) (mCellWidth * cellInfo.position.x);
+                    int top = (int) (mCellHeight * cellInfo.position.y);
+                    childView.layout(left, top, left + childView.getMeasuredWidth(),
+                            top + childView.getMeasuredHeight());
+                }
 
-                childView.layout(left, top, left + childWidth,
-                        top + childView.getMeasuredHeight());
             }
         }
     }
@@ -196,7 +219,6 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             v.destroyDrawingCache();
             v.setDrawingCacheEnabled(true);
             Bitmap bm = Bitmap.createBitmap(v.getDrawingCache());
-            v.setVisibility(View.GONE);
             startDrag(bm, (int) (mLastMotionX), (int) (mLastMotionY), v);
         }
         return false;
@@ -215,7 +237,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
                     if (!mScroller.isFinished()) {
                         mScroller.abortAnimation();
                     }
-                    temChangPosition = mDragPosition = pointToPosition((int) x, (int) y);
+                    mDownDragPosition = mCurrentDragPosition = pointToPosition((int) x, (int) y);
                     mDragOffsetX = (int) (ev.getRawX() - x);
                     mDragOffsetY = (int) (ev.getRawY() - y);
 
@@ -233,7 +255,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
                 if (mMode == MODE_DRAGGING) {
                     stopDrag();
                 }
-                if (dragImageView != null) {
+                if (mDraggingImageView != null) {
 //                    animationMap.clear();
                     showDropAnimation((int) x, (int) y);
                 }
@@ -252,17 +274,19 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
      * @param y        当前手指拖到的位置Y
      * @param cellView 长按的View
      */
-    private void startDrag(Bitmap bm, int x, int y, View cellView) {
+    private void startDrag(Bitmap bm, int x, int y, final View cellView) {
+
+        mDraggingView = cellView;
 
         mDragPointX = x - cellView.getLeft();
         mDragPointY = y - cellView.getTop();
         mWindowParams = new WindowManager.LayoutParams();
 
         mWindowParams.gravity = Gravity.TOP | Gravity.LEFT;
-        mWindowParams.x = cellView.getLeft();
-        mWindowParams.y = cellView.getTop();
-        mWindowParams.height = LayoutParams.WRAP_CONTENT;
-        mWindowParams.width = LayoutParams.WRAP_CONTENT;
+        mWindowParams.x = cellView.getLeft() + mDragOffsetX;
+        mWindowParams.y = cellView.getTop() + mDragOffsetY;
+        mWindowParams.height = (int) (cellView.getMeasuredHeight() * 1.1);
+        mWindowParams.width = (int) (cellView.getMeasuredWidth() * 1.1);
         mWindowParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
@@ -272,13 +296,25 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         mWindowParams.windowAnimations = 0;
         mWindowParams.alpha = 0.8f;
 
-        ImageView iv = new ImageView(getContext());
+        final ImageView iv = new ImageView(getContext());
         iv.setImageBitmap(bm);
         mDragBitmap = bm;
         mWindowManager = (WindowManager) getContext().getSystemService(
                 Context.WINDOW_SERVICE);
+
+        cellView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                iv.setVisibility(VISIBLE);
+                cellView.setVisibility(View.INVISIBLE);
+                mMode = MODE_DRAGGING;
+            }
+        }, 200);
         mWindowManager.addView(iv, mWindowParams);
-        dragImageView = iv;
+        iv.setScaleX(1.1f);
+        iv.setScaleY(1.1f);
+        iv.setVisibility(INVISIBLE);
+        mDraggingImageView = iv;
 
         halfBitmapWidth = bm.getWidth() / 2;
         halfBitmapHeight = bm.getHeight() / 2;
@@ -290,58 +326,70 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
 
     //根据手势绘制不断变化位置的dragView
     private void onDrag(int x, int y) {
-        if (dragImageView != null) {
+        if (mDraggingImageView != null) {
             mWindowParams.alpha = 0.8f;
             mWindowParams.x = x - mDragPointX + mDragOffsetX;
             mWindowParams.y = y - mDragPointY + mDragOffsetY;
-            mWindowManager.updateViewLayout(dragImageView, mWindowParams);
+            mWindowManager.updateViewLayout(mDraggingImageView, mWindowParams);
         }
-        int tempPosition = pointToPosition(x, y);
-        if (tempPosition != -1) {
-            mDragPosition = tempPosition;
-        }
-        View view = getChildAt(temChangPosition);
-        if (view == null) {
+        Point tempPosition = pointToPosition(x, y);
+        mCurrentDragPosition = tempPosition;
+        if (mDraggingView == null) {
             stopDrag();
             return;
         }
-        view.setVisibility(View.INVISIBLE);
-        if (temChangPosition != mDragPosition) {
-            View dragView = getChildAt(temChangPosition);
-            movePositionAnimation(temChangPosition, mDragPosition);
-            removeViewAt(temChangPosition);
-            addView(dragView, mDragPosition);
-            getChildAt(mDragPosition).setVisibility(View.INVISIBLE);
-//            this.getSaAdapter().exchange(temChangPosition, mDragPosition);
-            temChangPosition = mDragPosition;
+        mDraggingView.setVisibility(View.INVISIBLE);
+        Log.e("ehart", "current dragging position: " + mCurrentDragPosition);
+        Log.e("ehart", "down dragging position: " + mDownDragPosition);
+        if (!mDownDragPosition.equals(mCurrentDragPosition)) {
+            View currentView = mViewMap.get(mCurrentDragPosition);
+            if (currentView != null) {
+                movePositionAnimation(currentView, mCurrentDragPosition, mDownDragPosition); // TODO 这里最后的参数不应该是down
+//            removeView(mDraggingView);
+//            addView(mDraggingView, mCurrentDragPosition);
+                currentView.setVisibility(View.INVISIBLE);
+//            this.getSaAdapter().exchange(mDownDragPosition, mCurrentDragPosition);
+//                mDownDragPosition = mCurrentDragPosition;
+            }
+
         }
     }
 
     //根据坐标，判断当前item所属的位置，即编号
-    public int pointToPosition(int x, int y) {
-
-        if (frame == null)
-            frame = new Rect();
-        final int count = getChildCount();
-        for (int i = count - 1; i >= 0; i--) {
-            final View child = getChildAt(i);
-            child.getHitRect(frame);
-            if (frame.contains(x, y)) {
-                return i;
-            }
-        }
-        return -1;
+    public Point pointToPosition(int x, int y) {
+        x = x > 0 ? x : 0;
+        y = y > 0 ? y : 0;
+        Point position = new Point();
+        position.x = (int) (x / mCellWidth);
+        position.y = (int) (y / mCellHeight);
+        return position;
     }
 
     //停止拖动
     private void stopDrag() {
 //        recoverChildren();
         if (mMode == MODE_DRAGGING) {
-            if (getChildAt(mDragPosition).getVisibility() != View.VISIBLE)
-                getChildAt(mDragPosition).setVisibility(View.VISIBLE);
+            View currentView = mViewMap.get(mCurrentDragPosition);
+            if (currentView != null && currentView.getVisibility() != View.VISIBLE) {
+                currentView.setVisibility(View.VISIBLE);
+            }
+            changePosition(mDraggingView, mCurrentDragPosition);
+            mDraggingView.setVisibility(VISIBLE);
             mMode = MODE_FREE;
 //            mContext.sendBroadcast(new Intent("com.stg.menu_move"));
         }
+    }
+
+    private boolean changePosition(View targetView, Point position) {
+        if (targetView.getTag() instanceof CellInfo) {
+            CellInfo cellInfo = (CellInfo) targetView.getTag();
+            cellInfo.position = position;
+            requestLayout();
+            mViewMap.remove(cellInfo.position);
+            mViewMap.put(position, targetView);
+            return true;
+        }
+        return false;
     }
 
     private boolean isCanMove() {
@@ -349,26 +397,14 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     }
 
     //执行位置动画
-    private void movePositionAnimation(int oldP, int newP) {
-        int moveNum = newP - oldP;
-        if (moveNum != 0 && !isMovingFastConflict(moveNum)) {
-            int absMoveNum = Math.abs(moveNum);
-            for (int i = 0; i < absMoveNum; i++) {
-                int holdPosition = (moveNum > 0) ? oldP + 1 : oldP - 1;
-                View view = getChildAt(holdPosition);
-                if (view != null) {
-                    view.startAnimation(animationPositionToPosition(oldP, newP));
-                }
-                oldP = holdPosition;
-            }
-        }
+    private void movePositionAnimation(View currentView, Point originPosition, Point targetPosition) {
+        currentView.startAnimation(generateAnimation(originPosition, targetPosition));
     }
 
-    //返回滑动的位移动画，比较复杂，有兴趣的可以看看
-    private Animation animationPositionToPosition(int oldP, int newP) {
+    private Animation generateAnimation(Point oldP, Point newP) {
 
-        PointF oldPF = positionToPoint2(oldP);
-        PointF newPF = positionToPoint2(newP);
+        PointF oldPF = getOriginOfPosition(oldP);
+        PointF newPF = getOriginOfPosition(newP);
 
         TranslateAnimation animation;
 
@@ -384,15 +420,14 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
 
     //执行松手动画
     private void showDropAnimation(int x, int y) {
-        ViewGroup moveView = (ViewGroup) getChildAt(mDragPosition);
         TranslateAnimation animation = new TranslateAnimation(x
-                - halfBitmapWidth - moveView.getLeft(), 0, y - halfBitmapHeight
-                - moveView.getTop(), 0);
+                - halfBitmapWidth - mDraggingView.getLeft(), 0, y - halfBitmapHeight
+                - mDraggingView.getTop(), 0);
         animation.setFillAfter(false);
         animation.setDuration(300);
-        moveView.setAnimation(animation);
-        mWindowManager.removeView(dragImageView);
-        dragImageView = null;
+        mDraggingView.setAnimation(animation);
+        mWindowManager.removeView(mDraggingImageView);
+        mDraggingImageView = null;
 
         if (mDragBitmap != null) {
             mDragBitmap = null;
@@ -411,7 +446,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     //判断滑动的一系列动画是否有冲突
     private boolean isMovingFastConflict(int moveNum) {
 //        int itemsMoveNum = Math.abs(moveNum);
-//        int temp = mDragPosition;
+//        int temp = mCurrentDragPosition;
 //        for (int i = 0; i < itemsMoveNum; i++) {
 //            int holdPosition = moveNum > 0 ? temp + 1 : temp - 1;
 //            if (animationMap.containsKey(holdPosition)) {
@@ -422,24 +457,17 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         return false;
     }
 
-    public PointF positionToPoint2(int position) {
+    public PointF getOriginOfPosition(Point position) {
         PointF point = new PointF();
-
-        int row = position / colCount % rowCount;
-        int col = position % colCount;
-        int left = leftPadding + col * (colSpace + childWidth);
-        int top = topPadding + row * (rowSpace + childHeight);
-
-        point.x = left;
-        point.y = top;
+        point.x = position.x * mCellWidth;
+        point.y = position.y * mCellHeight;
         return point;
 
     }
 
     public static class CellInfo {
         View cell;
-        int cellX = -1;
-        int cellY = -1;
+        Point position = new Point(-1, -1);
         int spanX;
         int spanY;
     }

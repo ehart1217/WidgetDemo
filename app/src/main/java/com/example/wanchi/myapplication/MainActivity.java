@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.example.wanchi.myapplication.gallery.GalleryMain;
+import com.example.wanchi.myapplication.widget.GridActivity;
 import com.example.wanchi.myapplication.widget.WidgetMainActivity;
 
 /**
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
                 break;
             case R.id.activity_navigate_to_grid:
+                GridActivity.navigateTo(this);
                 break;
             case R.id.activity_navigate_to_widgets:
                 WidgetMainActivity.navigateTo(this);
