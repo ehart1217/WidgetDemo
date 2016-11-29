@@ -100,6 +100,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     // 空间被占用情况
     private boolean[][] mOccupied;
     private HashMap<Point, View> mViewMap;
+    private Point mLastDragPosition;
 
     public CellLayout(Context context) {
         this(context, null);
@@ -121,10 +122,12 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     }
 
 
-    public void addCell(View child, Point position) {
+    public void addCell(View child, Point position, Point size) {
         child.setClickable(true);
         CellInfo cellInfo = new CellInfo();
         cellInfo.cell = child;
+        cellInfo.spanX = size.x;
+        cellInfo.spanY = size.y;
         cellInfo.position = position;
         child.setTag(cellInfo);
         mViewMap.put(position, child);
@@ -332,8 +335,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             mWindowParams.y = y - mDragPointY + mDragOffsetY;
             mWindowManager.updateViewLayout(mDraggingImageView, mWindowParams);
         }
-        Point tempPosition = pointToPosition(x, y);
-        mCurrentDragPosition = tempPosition;
+        mCurrentDragPosition = pointToPosition(x, y);
         if (mDraggingView == null) {
             stopDrag();
             return;
@@ -341,17 +343,25 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         mDraggingView.setVisibility(View.INVISIBLE);
         Log.e("ehart", "current dragging position: " + mCurrentDragPosition);
         Log.e("ehart", "down dragging position: " + mDownDragPosition);
-        if (!mDownDragPosition.equals(mCurrentDragPosition)) {
+        Log.e("ehart", "mViewMap: " + mViewMap.keySet());
+
+        if (mLastDragPosition != null && !mLastDragPosition.equals(mCurrentDragPosition)) {
+            //取消原本换了的位置
+            View exchangedView = mViewMap.get(mLastDragPosition);
+            exchangedView.startAnimation(generateAnimation(mLastDragPosition, mDownDragPosition, true));// TODO 这里最后的参数不应该是down
+            mLastDragPosition = null;
+        }
+
+        if (!mDownDragPosition.equals(mCurrentDragPosition) &&
+                (mLastDragPosition == null || !mLastDragPosition.equals(mCurrentDragPosition))) {
+
             View currentView = mViewMap.get(mCurrentDragPosition);
             if (currentView != null) {
-                movePositionAnimation(currentView, mCurrentDragPosition, mDownDragPosition); // TODO 这里最后的参数不应该是down
-//            removeView(mDraggingView);
-//            addView(mDraggingView, mCurrentDragPosition);
-                currentView.setVisibility(View.INVISIBLE);
-//            this.getSaAdapter().exchange(mDownDragPosition, mCurrentDragPosition);
-//                mDownDragPosition = mCurrentDragPosition;
+                mLastDragPosition = new Point(mCurrentDragPosition);
+                Log.e("ehart", "currentView is not null");
+                currentView.startAnimation(generateAnimation(mCurrentDragPosition, mDownDragPosition, false));// TODO 这里最后的参数不应该是down
+//                currentView.setVisibility(View.INVISIBLE);
             }
-
         }
     }
 
@@ -373,19 +383,43 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             if (currentView != null && currentView.getVisibility() != View.VISIBLE) {
                 currentView.setVisibility(View.VISIBLE);
             }
-            changePosition(mDraggingView, mCurrentDragPosition);
+
+            View mLastView = null;
+            if (mLastDragPosition != null) {
+                mLastView = mViewMap.get(mLastDragPosition);
+                mLastDragPosition = null;
+            }
+            // 正在被拖动的view调整
+            changePosition(mDraggingView, mCurrentDragPosition, true);
             mDraggingView.setVisibility(VISIBLE);
             mMode = MODE_FREE;
-//            mContext.sendBroadcast(new Intent("com.stg.menu_move"));
+
+            // 被换位置的view调整
+            if (mLastView != null) {
+                mLastView.setVisibility(VISIBLE);
+                changePosition(mLastView, mDownDragPosition, false);
+            }
+            requestLayout();
         }
     }
 
-    private boolean changePosition(View targetView, Point position) {
+    /**
+     * 改变View的位置
+     * 1.改变tag里Info的值
+     * 2.改变map里的值
+     *
+     * @param targetView           目标view
+     * @param position             目标位置
+     * @param removeOriginPosition 是否移除map中原先的position
+     * @return 成功与否
+     */
+    private boolean changePosition(View targetView, Point position, boolean removeOriginPosition) {
         if (targetView.getTag() instanceof CellInfo) {
             CellInfo cellInfo = (CellInfo) targetView.getTag();
+            if (removeOriginPosition) {
+                mViewMap.remove(cellInfo.position);
+            }
             cellInfo.position = position;
-            requestLayout();
-            mViewMap.remove(cellInfo.position);
             mViewMap.put(position, targetView);
             return true;
         }
@@ -396,27 +430,29 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         return true;
     }
 
-    //执行位置动画
-    private void movePositionAnimation(View currentView, Point originPosition, Point targetPosition) {
-        currentView.startAnimation(generateAnimation(originPosition, targetPosition));
-    }
-
-    private Animation generateAnimation(Point oldP, Point newP) {
+    private Animation generateAnimation(Point oldP, Point newP, boolean reverse) {
 
         PointF oldPF = getOriginOfPosition(oldP);
         PointF newPF = getOriginOfPosition(newP);
 
         TranslateAnimation animation;
 
+//        animation = new TranslateAnimation(Animation.RELATIVE_TO_PARENT, oldPF.x, Animation.RELATIVE_TO_PARENT, newPF.x,
+//                Animation.RELATIVE_TO_PARENT, oldPF.y, Animation.RELATIVE_TO_PARENT, newPF.y);
         // regular animation between two neighbor items
-        animation = new TranslateAnimation(newPF.x - oldPF.x, 0, newPF.y
-                - oldPF.y, 0);
+        if (reverse) {
+            animation = new TranslateAnimation(newPF.x - oldPF.x, 0, newPF.y - oldPF.y, 0);
+        } else {
+            animation = new TranslateAnimation(0, newPF.x - oldPF.x, 0, newPF.y - oldPF.y);
+        }
+
         animation.setDuration(500);
         animation.setFillAfter(true);
 //        animation.setAnimationListener(new NotifyDataSetListener(oldP));
 
         return animation;
     }
+
 
     //执行松手动画
     private void showDropAnimation(int x, int y) {

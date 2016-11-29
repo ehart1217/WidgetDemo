@@ -36,14 +36,16 @@ public class GridFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_grid, container, false);
         mCellLayout = (CellLayout) rootView.findViewById(R.id.fragment_cell_layout);
-        mCellLayout.addCell(createChildView(), new Point(1, 2));
-        mCellLayout.addCell(createChildView(), new Point(3, 4));
+        mCellLayout.addCell(createChildView("1"), new Point(1, 2), new Point(1, 1));
+        mCellLayout.addCell(createChildView("2"), new Point(3, 4), new Point(4, 1));
+        mCellLayout.addCell(createChildView("3"), new Point(0, 4), new Point(2, 2));
+        mCellLayout.addCell(createChildView("4"), new Point(2, 0), new Point(1, 4));
         return rootView;
     }
 
-    private View createChildView() {
+    private View createChildView(String name) {
         TextView view = new TextView(getActivity());
-        view.setText("haha");
+        view.setText(name);
         ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         view.setPadding(30, 30, 30, 30);
         view.setBackgroundColor(Color.BLACK);
