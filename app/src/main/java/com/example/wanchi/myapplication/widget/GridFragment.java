@@ -37,9 +37,11 @@ public class GridFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_grid, container, false);
         mCellLayout = (CellLayout) rootView.findViewById(R.id.fragment_cell_layout);
         mCellLayout.addCell(createChildView("1"), new Point(1, 2), new Point(1, 1));
-        mCellLayout.addCell(createChildView("2"), new Point(3, 4), new Point(4, 1));
+        mCellLayout.addCell(createChildView("2"), new Point(0, 4), new Point(4, 1));
         mCellLayout.addCell(createChildView("3"), new Point(0, 4), new Point(2, 2));
         mCellLayout.addCell(createChildView("4"), new Point(2, 0), new Point(1, 4));
+        mCellLayout.addCell(createChildView("5"), new Point(3, 0), new Point(1, 1));
+        mCellLayout.addCell(createChildView("6"), new Point(3, 3), new Point(1, 1));
         return rootView;
     }
 
@@ -48,11 +50,27 @@ public class GridFragment extends Fragment {
         view.setText(name);
         ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         view.setPadding(30, 30, 30, 30);
-        view.setBackgroundColor(Color.BLACK);
+        view.setBackgroundColor(getRandomColor());
         view.setTextColor(Color.WHITE);
         view.setGravity(Gravity.CENTER);
         view.setLayoutParams(lp);
         return view;
+    }
+
+    private int getRandomColor() {
+        int random = (int) (Math.random() * 5);
+        switch (random) {
+            case 0:
+                return Color.RED;
+            case 1:
+                return Color.BLUE;
+            case 2:
+                return Color.YELLOW;
+            case 3:
+                return Color.GRAY;
+            default:
+                return Color.BLACK;
+        }
     }
 
 }

@@ -8,7 +8,6 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,10 +16,10 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
-import android.widget.Scroller;
 
 import com.example.wanchi.myapplication.utils.DensityUtil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -61,12 +60,9 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     private int mDownX;
     private int mDownY;
 
-    //页面滚动的Scroll管理器
-    private Scroller mScroller;
-
     private int mDragOffsetX; // drag的偏移量，计算container的相对位置，例如计算状态栏的高度。
     private int mDragOffsetY;
-    private Point mCurrentDragPosition;
+    private Point mCurrentPassPosition;
     private Point mDownDragPosition;
 
     private int halfBitmapWidth;
@@ -100,7 +96,9 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     // 空间被占用情况
     private boolean[][] mOccupied;
     private HashMap<Point, View> mViewMap;
-    private Point mLastDragPosition;
+    private Point mFromPositionCache; // 为了取消拖动，恢复原来的位置，保存的一个信息。
+    private Point mLastPassPosition; // 为了得到挤压方向，保存交换位置前的最后一个经过的位置。
+    private Point mToPositionCache;
 
     public CellLayout(Context context) {
         this(context, null);
@@ -113,7 +111,6 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     public CellLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mContext = context;
-        this.mScroller = new Scroller(context);
         mOccupied = new boolean[mColumn][mRow];
         mViewMap = new HashMap<>();
 
@@ -152,28 +149,31 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         screenHeight = height;
         int usedWidth = width - leftPadding - rightPadding - (mColumn - 1)
                 * colSpace;
-        int usedheight = ((height - topPadding - bottomPadding - (mRow - 1)
+        int usedHeight = ((height - topPadding - bottomPadding - (mRow - 1)
                 * rowSpace));
-        int childWidth = usedWidth / mColumn;
-        int childHeight = usedheight / mRow;
         final int count = getChildCount();
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
-            int childWidthSpec = getChildMeasureSpec(
-                    MeasureSpec
-                            .makeMeasureSpec(childWidth, MeasureSpec.EXACTLY),
-                    20, childWidth);
-            int childHeightSpec = getChildMeasureSpec(
-                    MeasureSpec.makeMeasureSpec(childHeight,
-                            MeasureSpec.EXACTLY), 20, childHeight);
-            child.measure(childWidthSpec, childHeightSpec);
+            if (child.getTag() instanceof CellInfo) {
+                CellInfo cellInfo = (CellInfo) child.getTag();
+                int childWidth = usedWidth / mColumn * cellInfo.spanX;
+                int childHeight = usedHeight / mRow * cellInfo.spanY;
+
+                int childWidthSpec = getChildMeasureSpec(
+                        MeasureSpec
+                                .makeMeasureSpec(childWidth, MeasureSpec.EXACTLY),
+                        20, childWidth);
+                int childHeightSpec = getChildMeasureSpec(
+                        MeasureSpec.makeMeasureSpec(childHeight,
+                                MeasureSpec.EXACTLY), 20, childHeight);
+                child.measure(childWidthSpec, childHeightSpec);
+            }
         }
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int childCount = getChildCount();
-
 
         mCellWidth = getMeasuredWidth() / mColumn;
         mCellHeight = getMeasuredHeight() / mRow;
@@ -208,14 +208,6 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     }
 
     @Override
-    public void computeScroll() {
-        if (mScroller.computeScrollOffset()) {
-            scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
-            postInvalidate();
-        }
-    }
-
-    @Override
     public boolean onLongClick(View v) {
         // 判断是否长按了子View
         if (v.getTag() instanceof CellInfo) {
@@ -236,18 +228,15 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mDownX = (int) x;
-                if (mScroller.isFinished()) {
-                    if (!mScroller.isFinished()) {
-                        mScroller.abortAnimation();
-                    }
-                    mDownDragPosition = mCurrentDragPosition = pointToPosition((int) x, (int) y);
-                    mDragOffsetX = (int) (ev.getRawX() - x);
-                    mDragOffsetY = (int) (ev.getRawY() - y);
+                mDownDragPosition = mCurrentPassPosition = pointToPosition((int) x, (int) y);
+                mLastPassPosition = mDownDragPosition;
 
-                    mLastMotionX = x;
-                    mLastMotionY = y;
-                    mDownX = (int) x;
-                }
+                mDragOffsetX = (int) (ev.getRawX() - x);
+                mDragOffsetY = (int) (ev.getRawY() - y);
+
+                mLastMotionX = x;
+                mLastMotionY = y;
+                mDownX = (int) x;
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mMode == MODE_DRAGGING) {
@@ -266,6 +255,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
                 break;
             case MotionEvent.ACTION_CANCEL:
 //                showEdit(false);
+                break;
         }
         super.dispatchTouchEvent(ev);
         return true;
@@ -335,32 +325,33 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             mWindowParams.y = y - mDragPointY + mDragOffsetY;
             mWindowManager.updateViewLayout(mDraggingImageView, mWindowParams);
         }
-        mCurrentDragPosition = pointToPosition(x, y);
+        if (mCurrentPassPosition != null && !mCurrentPassPosition.equals(pointToPosition(x, y))) {
+            mLastPassPosition = mCurrentPassPosition;
+        }
+        mCurrentPassPosition = pointToPosition(x, y);
         if (mDraggingView == null) {
             stopDrag();
             return;
         }
         mDraggingView.setVisibility(View.INVISIBLE);
-        Log.e("ehart", "current dragging position: " + mCurrentDragPosition);
-        Log.e("ehart", "down dragging position: " + mDownDragPosition);
-        Log.e("ehart", "mViewMap: " + mViewMap.keySet());
 
-        if (mLastDragPosition != null && !mLastDragPosition.equals(mCurrentDragPosition)) {
+        if (mFromPositionCache != null && mToPositionCache != null && !mFromPositionCache.equals(mCurrentPassPosition)) {
             //取消原本换了的位置
-            View exchangedView = mViewMap.get(mLastDragPosition);
-            exchangedView.startAnimation(generateAnimation(mLastDragPosition, mDownDragPosition, true));// TODO 这里最后的参数不应该是down
-            mLastDragPosition = null;
+            View exchangedView = mViewMap.get(mFromPositionCache);
+            exchangedView.startAnimation(generateAnimation(mFromPositionCache, mToPositionCache, true));// TODO 这里最后的参数不应该是down
+            mFromPositionCache = null;
         }
 
-        if (!mDownDragPosition.equals(mCurrentDragPosition) &&
-                (mLastDragPosition == null || !mLastDragPosition.equals(mCurrentDragPosition))) {
+        if (!mDownDragPosition.equals(mCurrentPassPosition) &&
+                (mFromPositionCache == null || !mFromPositionCache.equals(mCurrentPassPosition))) {
 
-            View currentView = mViewMap.get(mCurrentDragPosition);
+            View currentView = mViewMap.get(mCurrentPassPosition);
             if (currentView != null) {
-                mLastDragPosition = new Point(mCurrentDragPosition);
-                Log.e("ehart", "currentView is not null");
-                currentView.startAnimation(generateAnimation(mCurrentDragPosition, mDownDragPosition, false));// TODO 这里最后的参数不应该是down
-//                currentView.setVisibility(View.INVISIBLE);
+                mToPositionCache = findDestination(currentView, mLastPassPosition);
+                if (mToPositionCache != null) {
+                    mFromPositionCache = new Point(mCurrentPassPosition);
+                    currentView.startAnimation(generateAnimation(mFromPositionCache, mToPositionCache, false));// TODO 这里最后的参数不应该是down
+                }
             }
         }
     }
@@ -375,29 +366,92 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         return position;
     }
 
+    /**
+     * 根据拖动的方向，寻找合适的位置
+     *
+     * @param view             将要被移走的view
+     * @param lastPassPosition 最后一次经过的位置，用来决定拖动的方向
+     * @return 得到目的地位置, 如果没有就返回null。
+     */
+    private Point findDestination(View view, Point lastPassPosition) {
+        if (view.getTag() instanceof CellInfo) {
+            CellInfo cellInfo = (CellInfo) view.getTag();
+            Point currentPosition = cellInfo.position;
+
+            int originX = currentPosition.x;
+            int originY = currentPosition.y;
+
+            if (lastPassPosition.y != currentPosition.y) {
+                int offset = lastPassPosition.y > currentPosition.y ? -1 : 1;
+
+                ArrayList<Point> destinationList = new ArrayList<>();
+                destinationList.add(new Point(originX, originY + offset));
+                destinationList.add(new Point(originX + offset, originY));
+                destinationList.add(new Point(originX - offset, originY));
+                destinationList.add(new Point(originX, originY - offset));
+
+                for (Point destination : destinationList) {
+                    if (isPositionEmpty(destination)) {
+                        return destination;
+                    }
+                }
+            }
+
+            if (lastPassPosition.x != currentPosition.x) {
+                int offset = lastPassPosition.x > currentPosition.x ? -1 : 1;
+
+                ArrayList<Point> destinationList = new ArrayList<>();
+                destinationList.add(new Point(originX + offset, originY));
+                destinationList.add(new Point(originX, originY + offset));
+                destinationList.add(new Point(originX, originY - offset));
+                destinationList.add(new Point(originX - offset, originY));
+
+                for (Point destination : destinationList) {
+                    if (isPositionEmpty(destination)) {
+                        return destination;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean isPositionEmpty(Point position) {
+        if (position.x >= 0 && position.x <= mColumn - 1 && position.y >= 0 && position.y <= mRow - 1) {
+            if (position.equals(mDownDragPosition)) {
+                return true;
+            }
+            if (mViewMap.get(position) == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     //停止拖动
     private void stopDrag() {
 //        recoverChildren();
         if (mMode == MODE_DRAGGING) {
-            View currentView = mViewMap.get(mCurrentDragPosition);
+            View currentView = mViewMap.get(mCurrentPassPosition);
             if (currentView != null && currentView.getVisibility() != View.VISIBLE) {
                 currentView.setVisibility(View.VISIBLE);
             }
 
             View mLastView = null;
-            if (mLastDragPosition != null) {
-                mLastView = mViewMap.get(mLastDragPosition);
-                mLastDragPosition = null;
+            if (mFromPositionCache != null) {
+                mLastView = mViewMap.get(mFromPositionCache);
+                mFromPositionCache = null;
             }
+            mLastPassPosition = null;
             // 正在被拖动的view调整
-            changePosition(mDraggingView, mCurrentDragPosition, true);
+            changePosition(mDraggingView, mCurrentPassPosition, true);
             mDraggingView.setVisibility(VISIBLE);
             mMode = MODE_FREE;
 
             // 被换位置的view调整
             if (mLastView != null) {
                 mLastView.setVisibility(VISIBLE);
-                changePosition(mLastView, mDownDragPosition, false);
+                changePosition(mLastView, mToPositionCache, false);
             }
             requestLayout();
         }
@@ -426,10 +480,6 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         return false;
     }
 
-    private boolean isCanMove() {
-        return true;
-    }
-
     private Animation generateAnimation(Point oldP, Point newP, boolean reverse) {
 
         PointF oldPF = getOriginOfPosition(oldP);
@@ -437,9 +487,6 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
 
         TranslateAnimation animation;
 
-//        animation = new TranslateAnimation(Animation.RELATIVE_TO_PARENT, oldPF.x, Animation.RELATIVE_TO_PARENT, newPF.x,
-//                Animation.RELATIVE_TO_PARENT, oldPF.y, Animation.RELATIVE_TO_PARENT, newPF.y);
-        // regular animation between two neighbor items
         if (reverse) {
             animation = new TranslateAnimation(newPF.x - oldPF.x, 0, newPF.y - oldPF.y, 0);
         } else {
@@ -448,7 +495,6 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
 
         animation.setDuration(500);
         animation.setFillAfter(true);
-//        animation.setAnimationListener(new NotifyDataSetListener(oldP));
 
         return animation;
     }
@@ -472,25 +518,6 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         for (int i = 0; i < getChildCount(); i++) {
             getChildAt(i).clearAnimation();
         }
-    }
-
-
-    /**
-     * @param moveNum
-     * @return
-     */
-    //判断滑动的一系列动画是否有冲突
-    private boolean isMovingFastConflict(int moveNum) {
-//        int itemsMoveNum = Math.abs(moveNum);
-//        int temp = mCurrentDragPosition;
-//        for (int i = 0; i < itemsMoveNum; i++) {
-//            int holdPosition = moveNum > 0 ? temp + 1 : temp - 1;
-//            if (animationMap.containsKey(holdPosition)) {
-//                return true;
-//            }
-//            temp = holdPosition;
-//        }
-        return false;
     }
 
     public PointF getOriginOfPosition(Point position) {
