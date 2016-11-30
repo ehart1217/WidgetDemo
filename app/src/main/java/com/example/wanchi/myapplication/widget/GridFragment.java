@@ -39,9 +39,9 @@ public class GridFragment extends Fragment {
         mCellLayout.addCell(createChildView("1"), new Point(1, 2), new Point(1, 1));
         mCellLayout.addCell(createChildView("2"), new Point(0, 4), new Point(4, 1));
         mCellLayout.addCell(createChildView("3"), new Point(0, 4), new Point(2, 2));
-        mCellLayout.addCell(createChildView("4"), new Point(2, 0), new Point(1, 4));
-        mCellLayout.addCell(createChildView("5"), new Point(3, 0), new Point(1, 1));
-        mCellLayout.addCell(createChildView("6"), new Point(3, 3), new Point(1, 1));
+//        mCellLayout.addCell(createChildView("4"), new Point(2, 0), new Point(1, 4));
+//        mCellLayout.addCell(createChildView("5"), new Point(3, 0), new Point(1, 1));
+//        mCellLayout.addCell(createChildView("6"), new Point(3, 3), new Point(1, 1));
         return rootView;
     }
 

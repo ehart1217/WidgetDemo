@@ -8,6 +8,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,7 +21,9 @@ import android.widget.ImageView;
 import com.example.wanchi.myapplication.utils.DensityUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * 宫格根布局
@@ -99,6 +102,8 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     private Point mFromPositionCache; // 为了取消拖动，恢复原来的位置，保存的一个信息。
     private Point mLastPassPosition; // 为了得到挤压方向，保存交换位置前的最后一个经过的位置。
     private Point mToPositionCache;
+    private Point mDraggingSpan; //被拖拽的View的占地
+    private Point mCurrentPassOriginPosition;
 
     public CellLayout(Context context) {
         this(context, null);
@@ -268,7 +273,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
      * @param cellView 长按的View
      */
     private void startDrag(Bitmap bm, int x, int y, final View cellView) {
-
+        Log.e(TAG_DRAG, "startDrag");
         mDraggingView = cellView;
 
         mDragPointX = x - cellView.getLeft();
@@ -315,6 +320,12 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         for (int i = 0; i < getChildCount(); i++) {
             getChildAt(i).getBackground().setAlpha((int) (0.8f * 255));
         }
+
+        // 获得被拖拽的View的占地
+        if (cellView.getTag() instanceof CellInfo) {
+            CellInfo cellInfo = (CellInfo) cellView.getTag();
+            mDraggingSpan = new Point(cellInfo.spanX, cellInfo.spanY);
+        }
     }
 
     //根据手势绘制不断变化位置的dragView
@@ -326,37 +337,52 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             mWindowManager.updateViewLayout(mDraggingImageView, mWindowParams);
         }
         if (mCurrentPassPosition != null && !mCurrentPassPosition.equals(pointToPosition(x, y))) {
+            // 前一个经过的位置
             mLastPassPosition = mCurrentPassPosition;
         }
         mCurrentPassPosition = pointToPosition(x, y);
+        mCurrentPassOriginPosition = calculateDraggingOriginPosition();
+
         if (mDraggingView == null) {
             stopDrag();
             return;
         }
         mDraggingView.setVisibility(View.INVISIBLE);
 
-        if (mFromPositionCache != null && mToPositionCache != null && !mFromPositionCache.equals(mCurrentPassPosition)) {
-            //取消原本换了的位置
+        //取消原本换了的位置
+        if (mFromPositionCache != null && mToPositionCache != null && !isOverlap(mCurrentPassOriginPosition, mDraggingSpan, findViewByPosition(mFromPositionCache))) {
             View exchangedView = mViewMap.get(mFromPositionCache);
-            exchangedView.startAnimation(generateAnimation(mFromPositionCache, mToPositionCache, true));// TODO 这里最后的参数不应该是down
+            if (exchangedView != null) {
+                exchangedView.startAnimation(generateAnimation(mFromPositionCache, mToPositionCache, true));
+            }
             mFromPositionCache = null;
         }
 
-        if (!mDownDragPosition.equals(mCurrentPassPosition) &&
-                (mFromPositionCache == null || !mFromPositionCache.equals(mCurrentPassPosition))) {
+        // 交换位置
+        if (!isInside(mCurrentPassPosition, mDraggingView) &&
+                (mFromPositionCache == null ||
+                        !isOverlap(mCurrentPassOriginPosition, mDraggingSpan, findViewByPosition(mFromPositionCache)))) {
 
-            View currentView = mViewMap.get(mCurrentPassPosition);
-            if (currentView != null) {
-                mToPositionCache = findDestination(currentView, mLastPassPosition);
-                if (mToPositionCache != null) {
-                    mFromPositionCache = new Point(mCurrentPassPosition);
-                    currentView.startAnimation(generateAnimation(mFromPositionCache, mToPositionCache, false));// TODO 这里最后的参数不应该是down
+            // 找到所有交叉的view
+            List<View> viewList = findViewListByMultiPosition(mCurrentPassOriginPosition, mDraggingSpan);
+            Log.e(TAG_DRAG, "findOverlapViewList:" + viewList);
+            if (viewList.size() == 1) {// TODO 目前只支持交换一个，交换多个待开发
+                View currentView = viewList.get(0);
+                if (currentView != null) {
+                    mToPositionCache = findDestination(currentView, mLastPassPosition);
+                    if (mToPositionCache != null) {
+                        CellInfo currentViewInfo = (CellInfo) currentView.getTag();
+                        mFromPositionCache = new Point(currentViewInfo.position);
+                        Log.e(TAG_DRAG, "exchange from:" + mFromPositionCache + " to:" + mToPositionCache);
+                        currentView.startAnimation(generateAnimation(mFromPositionCache, mToPositionCache, false));
+                    }
                 }
             }
+
         }
     }
 
-    //根据坐标，判断当前item所属的位置，即编号
+    //根据坐标，判断当前item所属的位置
     public Point pointToPosition(int x, int y) {
         x = x > 0 ? x : 0;
         y = y > 0 ? y : 0;
@@ -364,6 +390,81 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         position.x = (int) (x / mCellWidth);
         position.y = (int) (y / mCellHeight);
         return position;
+    }
+
+    /**
+     * 判断一个点是否在一个范围
+     *
+     * @param position       这个点
+     * @param originPosition 这个范围的其中一个点
+     * @param span           这个范围的大小
+     * @return 在里面返回true，否则false；
+     */
+    private boolean isInside(Point position, Point originPosition, Point span) {
+        boolean isXInside = position.x >= originPosition.x && position.x <= originPosition.x + span.x - 1;
+        boolean isYInside = position.y >= originPosition.y && position.y <= originPosition.y + span.y - 1;
+        return isXInside && isYInside;
+    }
+
+    private boolean isInside(Point position, View view) {
+        CellInfo cellInfo = (CellInfo) view.getTag();
+        Point span = new Point(cellInfo.spanX, cellInfo.spanY);
+        return isInside(position, cellInfo.position, span);
+    }
+
+
+    private boolean isOverlap(Point originPosition, Point span, View view) {
+        for (int x = originPosition.x; x < originPosition.x + span.x; x++) {
+            for (int y = originPosition.y; y < originPosition.y + span.y; y++) {
+                if (isInside(new Point(x, y), view)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private View findViewByPosition(Point position) {
+        Collection<View> viewList = mViewMap.values();
+        for (View view : viewList) {
+            if (isInside(position, view)) {
+                return view;
+            }
+        }
+        return null;
+    }
+
+    private Point findOriginPosition(Point position) {
+        View view = findViewByPosition(position);
+        if (view != null) {
+            CellInfo cellInfo = (CellInfo) view.getTag();
+            return cellInfo.position;
+        }
+        return null;
+    }
+
+    private Point calculateDraggingOriginPosition() {
+        // 被拖拽的view的起始坐标
+        CellInfo cellInfo = (CellInfo) mDraggingView.getTag();
+        int offsetX = mCurrentPassPosition.x - mDownDragPosition.x;
+        int offsetY = mCurrentPassPosition.y - mDownDragPosition.y;
+        return new Point(cellInfo.position.x + offsetX, cellInfo.position.y + offsetY);
+    }
+
+    private List<View> findViewListByMultiPosition(Point originPosition, Point span) {
+        List<View> viewList = new ArrayList<>();
+        if (originPosition == null) {
+            return viewList;
+        }
+        for (int x = originPosition.x; x < originPosition.x + span.x; x++) {
+            for (int y = originPosition.y; y < originPosition.y + span.y; y++) {
+                View view = findViewByPosition(new Point(x, y));
+                if (view != null) {
+                    viewList.add(view);
+                }
+            }
+        }
+        return viewList;
     }
 
     /**
@@ -381,8 +482,8 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             int originX = currentPosition.x;
             int originY = currentPosition.y;
 
-            if (lastPassPosition.y != currentPosition.y) {
-                int offset = lastPassPosition.y > currentPosition.y ? -1 : 1;
+            if (lastPassPosition.y != mCurrentPassPosition.y) {
+                int offset = lastPassPosition.y > mCurrentPassPosition.y ? -1 : 1;
 
                 ArrayList<Point> destinationList = new ArrayList<>();
                 destinationList.add(new Point(originX, originY + offset));
@@ -397,8 +498,8 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
                 }
             }
 
-            if (lastPassPosition.x != currentPosition.x) {
-                int offset = lastPassPosition.x > currentPosition.x ? -1 : 1;
+            if (lastPassPosition.x != mCurrentPassPosition.x) {
+                int offset = lastPassPosition.x > mCurrentPassPosition.x ? -1 : 1;
 
                 ArrayList<Point> destinationList = new ArrayList<>();
                 destinationList.add(new Point(originX + offset, originY));
@@ -473,8 +574,11 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             if (removeOriginPosition) {
                 mViewMap.remove(cellInfo.position);
             }
-            cellInfo.position = position;
-            mViewMap.put(position, targetView);
+            int offsetX = position.x - mDownDragPosition.x;
+            int offsetY = position.y - mDownDragPosition.y;
+            cellInfo.position.x += offsetX;
+            cellInfo.position.y += offsetY;
+            mViewMap.put(cellInfo.position, targetView);
             return true;
         }
         return false;
