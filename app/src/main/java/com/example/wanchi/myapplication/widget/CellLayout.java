@@ -133,12 +133,40 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         cellInfo.spanY = size.y;
         cellInfo.position = position;
         child.setTag(cellInfo);
-        mViewMap.put(position, child);
+        stashCell(child);
         if (child.getVisibility() != View.VISIBLE) {
             child.setVisibility(View.VISIBLE);
         }
         super.addView(child);
         addAllChildClickListener(this);
+    }
+
+    private void stashCell(View cellView) {
+        // 存入map中
+        CellInfo cellInfo = (CellInfo) cellView.getTag();
+        mViewMap.put(cellInfo.position, cellView);
+
+        //标记被占用的格子
+        Point originPosition = cellInfo.position;
+        for (int x = originPosition.x; x < originPosition.x + cellInfo.spanX && x < mColumn; x++) {
+            for (int y = originPosition.y; y < originPosition.y + cellInfo.spanY && y < mRow; y++) {
+                mOccupied[x][y] = true;
+            }
+        }
+    }
+
+    private void removeStashCell(View cellView) {
+        // remove map中的数据
+        CellInfo cellInfo = (CellInfo) cellView.getTag();
+        mViewMap.remove(cellInfo.position);
+
+        // 标记被占用的格子
+        Point originPosition = cellInfo.position;
+        for (int x = originPosition.x; x < originPosition.x + cellInfo.spanX && x < mColumn; x++) {
+            for (int y = originPosition.y; y < originPosition.y + cellInfo.spanY && y < mRow; y++) {
+                mOccupied[x][y] = false;
+            }
+        }
     }
 
     @Override
@@ -500,9 +528,10 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
                 destinationList.add(new Point(originX, originY - offset));
 
                 for (Point destination : destinationList) {
-                    if (isPositionEmpty(destination)) {
+                    if (canMove(view, destination.x - originX, destination.y - originY)) {
                         return destination;
                     }
+                    //// TODO: 2016/12/1  如果不是空的仅仅是因为被拖动的view，就应该符合要求
                 }
             }
 
@@ -516,26 +545,82 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
                 destinationList.add(new Point(originX - offset, originY));
 
                 for (Point destination : destinationList) {
-                    if (isPositionEmpty(destination)) {
+                    if (canMove(view, destination.x - originX, destination.y - originY)) {
                         return destination;
                     }
+                    //// TODO: 2016/12/1  如果不是空的仅仅是因为被拖动的view，就应该符合要求
                 }
             }
         }
         return null;
     }
 
-    private boolean isPositionEmpty(Point position) {
-        if (position.x >= 0 && position.x <= mColumn - 1 && position.y >= 0 && position.y <= mRow - 1) {
-            if (position.equals(mDownDragPosition)) {
-                return true;
+    /**
+     * 判断能否平移一个单位,目前只支持垂直方向平移。
+     *
+     * @param cell    被平移的view
+     * @param offsetX 1,-1,0
+     * @param offsetY 1,-1,0
+     * @return
+     */
+    private boolean canMove(View cell, int offsetX, int offsetY) {
+        CellInfo cellInfo = (CellInfo) cell.getTag();
+        Point position = cellInfo.position;
+
+        if (offsetY > 0) {
+            for (int x = position.x; x < position.x + cellInfo.spanX; x++) {
+                if (!isPositionEmpty(new Point(x, position.y + cellInfo.spanY))) {
+                    return false;
+                }
             }
-            if (mViewMap.get(position) == null) {
-                return true;
+            return true;
+        }
+
+        if (offsetY < 0) {
+            for (int x = position.x; x < position.x + cellInfo.spanX; x++) {
+                if (!isPositionEmpty(new Point(x, position.y - 1))) {
+                    return false;
+                }
             }
+            return true;
+        }
+
+        if (offsetX > 0) {
+            for (int y = position.y; y < position.y + cellInfo.spanY; y++) {
+                if (!isPositionEmpty(new Point(position.x + cellInfo.spanX, y))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (offsetX < 0) {
+            for (int y = position.y; y < position.y + cellInfo.spanY; y++) {
+                if (!isPositionEmpty(new Point(position.x - 1, y))) {
+                    return false;
+                }
+            }
+            return true;
         }
         return false;
     }
+
+    private boolean isPositionEmpty(Point position) {
+        return position.x > 0 && position.x < mColumn && position.y > 0 && position.y < mRow && !mOccupied[position.x][position.y];
+
+    }
+//
+//    private boolean isPositionEmpty(Point position) {
+//        if (position.x >= 0 && position.x <= mColumn - 1 && position.y >= 0 && position.y <= mRow - 1) {
+//            if (position.equals(mDownDragPosition)) {
+//                return true;
+//            }
+//            if (mViewMap.get(position) == null) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     //停止拖动
     private void stopDrag() {
@@ -580,7 +665,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         if (targetView.getTag() instanceof CellInfo) {
             CellInfo cellInfo = (CellInfo) targetView.getTag();
             if (removeOriginPosition) {
-                mViewMap.remove(cellInfo.position);
+                removeStashCell(targetView);
             }
             int offsetX = position.x - mDownDragPosition.x;
             int offsetY = position.y - mDownDragPosition.y;
@@ -598,7 +683,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             if (cellInfo.position.y + cellInfo.spanY >= mRow) {
                 cellInfo.position.y = mRow - cellInfo.spanY;
             }
-            mViewMap.put(cellInfo.position, targetView);
+            stashCell(targetView);
             return true;
         }
         return false;

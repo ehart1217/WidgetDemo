@@ -19,7 +19,7 @@ public class InfoClient {
         return null;
     }
 
-    public void register(IDataSwitch dataSwitch) {
+    public void register(IDataSwitch dataSwitch, Class object) {
 //        dataSwitch.getType()
     }
 
