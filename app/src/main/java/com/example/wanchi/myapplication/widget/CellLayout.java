@@ -365,7 +365,8 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
 
             // 找到所有交叉的view
             List<View> viewList = findViewListByMultiPosition(mCurrentPassOriginPosition, mDraggingSpan);
-            Log.e(TAG_DRAG, "findOverlapViewList:" + viewList);
+            viewList.remove(mDraggingView);// 排除掉自己
+            Log.e(TAG_DRAG, "findOverlapView size:" + viewList.size());
             if (viewList.size() == 1) {// TODO 目前只支持交换一个，交换多个待开发
                 View currentView = viewList.get(0);
                 if (currentView != null) {
@@ -459,7 +460,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         for (int x = originPosition.x; x < originPosition.x + span.x; x++) {
             for (int y = originPosition.y; y < originPosition.y + span.y; y++) {
                 View view = findViewByPosition(new Point(x, y));
-                if (view != null) {
+                if (view != null && !viewList.contains(view)) {
                     viewList.add(view);
                 }
             }
@@ -578,6 +579,18 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             int offsetY = position.y - mDownDragPosition.y;
             cellInfo.position.x += offsetX;
             cellInfo.position.y += offsetY;
+            if (cellInfo.position.x < 0) {
+                cellInfo.position.x = 0;
+            }
+            if (cellInfo.position.x + cellInfo.spanX >= mColumn) {
+                cellInfo.position.x = mColumn - cellInfo.spanX;
+            }
+            if (cellInfo.position.y < 0) {
+                cellInfo.position.y = 0;
+            }
+            if (cellInfo.position.y + cellInfo.spanY >= mRow) {
+                cellInfo.position.y = mRow - cellInfo.spanY;
+            }
             mViewMap.put(cellInfo.position, targetView);
             return true;
         }
