@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.wanchi.myapplication.R;
+import com.example.wanchi.myapplication.gallery.imagepreview.ImagePreviewDelActivity;
 import com.example.wanchi.myapplication.gallery.photopicker.adapter.ImageGridAdapter;
 import com.example.wanchi.myapplication.gallery.photopicker.bean.ImageFolder;
 import com.example.wanchi.myapplication.gallery.photopicker.bean.ImageItem;
@@ -25,6 +26,7 @@ import com.example.wanchi.myapplication.gallery.photopicker.utils.ImageDataSourc
 import com.example.wanchi.myapplication.gallery.photopicker.utils.ImagePicker;
 import com.example.wanchi.myapplication.gallery.photopicker.utils.LockScreenImageProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -40,6 +42,8 @@ public class ImageGridActivity extends AppCompatActivity implements ImageDataSou
     private ImageGridAdapter mImageGridAdapter;
     private TextView tv_des;
     private ImageView btn_back;
+
+    public static final int REQUEST_CODE_PREVIEW = 101;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -105,11 +109,18 @@ public class ImageGridActivity extends AppCompatActivity implements ImageDataSou
 
     @Override
     public void onImageItemClick(View view, ImageItem imageItem, int position) {
-        Log.i("lyy08", position + "");
-        Intent intent = new Intent();
-        intent.putExtra("imageItem",imageItem);
-        this.setResult(10001, intent);
-        finish();
+        //v1 直接显示
+//        Log.i("lyy08", position + "");
+//        Intent intent = new Intent();
+//        intent.putExtra("imageItem",imageItem);
+//        this.setResult(10001, intent);
+//        finish();
+
+        //进行预览
+        Intent intentPreview = new Intent(this, ImagePreviewDelActivity.class);
+        intentPreview.putExtra(ImagePicker.EXTRA_IMAGE_ITEMS, (ArrayList<ImageItem>) mImageGridAdapter.getImages());
+        intentPreview.putExtra(ImagePicker.EXTRA_SELECTED_IMAGE_POSITION, position);
+        startActivityForResult(intentPreview, REQUEST_CODE_PREVIEW);
     }
 
     @Override

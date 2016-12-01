@@ -16,4 +16,9 @@
         <item name="android:background">@color/white</item>
     </style>
 
+    <!--SuperCheckbox的样式-->
+    <style name="SuperCheckboxTheme" parent="@android:style/Widget.CompoundButton.CheckBox">
+        <item name="android:button">@drawable/selector_item_checked</item>
+    </style>
+
 </resources>

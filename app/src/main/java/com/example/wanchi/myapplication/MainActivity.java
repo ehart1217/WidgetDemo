@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
+import com.example.wanchi.myapplication.drag02.DragMain;
 import com.example.wanchi.myapplication.gallery.GalleryMain;
 import com.example.wanchi.myapplication.widget.GridActivity;
 import com.example.wanchi.myapplication.widget.WidgetMainActivity;
@@ -17,7 +18,7 @@ import com.example.wanchi.myapplication.widget.WidgetMainActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private Button gallery;
+    private Button gallery, drag;
     private View mGridBtn;
     private View mWidgetBtn;
 
@@ -34,7 +35,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mWidgetBtn.setOnClickListener(this);
 
         gallery = (Button) findViewById(R.id.gallery);
+        drag = (Button) findViewById(R.id.drag);
         gallery.setOnClickListener(this);
+        drag.setOnClickListener(this);
     }
 
     @Override
@@ -49,6 +52,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.activity_navigate_to_widgets:
                 WidgetMainActivity.navigateTo(this);
+                break;
+            case R.id.drag:
+                Intent intentDrag = new Intent(this, DragMain.class);
+                startActivity(intentDrag);
                 break;
         }
     }
