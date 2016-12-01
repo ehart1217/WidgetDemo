@@ -44,6 +44,5 @@ dependencies {
         transitive=true
     }
 
-
     compile 'com.yanzhenjie:recyclerview-swipe:1.0.2'
 }
