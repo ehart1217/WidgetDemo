@@ -104,6 +104,7 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
     private Point mToPositionCache;
     private Point mDraggingSpan; //被拖拽的View的占地
     private Point mCurrentPassOriginPosition;
+    private OnLongClickEmptyListener mLongClickEmptyListener;
 
     public CellLayout(Context context) {
         this(context, null);
@@ -212,6 +213,10 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         }
     }
 
+    public void setOnLongClickEmptyListener(OnLongClickEmptyListener onLongClickEmptyListener) {
+        mLongClickEmptyListener = onLongClickEmptyListener;
+    }
+
     @Override
     public boolean onLongClick(View v) {
         // 判断是否长按了子View
@@ -220,6 +225,8 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
             v.setDrawingCacheEnabled(true);
             Bitmap bm = Bitmap.createBitmap(v.getDrawingCache());
             startDrag(bm, (int) (mLastMotionX), (int) (mLastMotionY), v);
+        } else if (mLongClickEmptyListener != null) {
+            mLongClickEmptyListener.onLongClickEmpty(v);
         }
         return false;
     }
@@ -317,9 +324,9 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         halfBitmapWidth = bm.getWidth() / 2;
         halfBitmapHeight = bm.getHeight() / 2;
 
-        for (int i = 0; i < getChildCount(); i++) {
-            getChildAt(i).getBackground().setAlpha((int) (0.8f * 255));
-        }
+//        for (int i = 0; i < getChildCount(); i++) {
+//            getChildAt(i).getBackground().setAlpha((int) (0.8f * 255));
+//        }
 
         // 获得被拖拽的View的占地
         if (cellView.getTag() instanceof CellInfo) {
@@ -650,5 +657,9 @@ public class CellLayout extends ViewGroup implements View.OnLongClickListener {
         Point position = new Point(-1, -1);
         int spanX;
         int spanY;
+    }
+
+    public interface OnLongClickEmptyListener {
+        void onLongClickEmpty(View view);
     }
 }
