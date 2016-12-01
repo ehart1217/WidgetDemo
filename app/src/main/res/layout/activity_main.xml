@@ -21,4 +21,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="grid" />
+
+    <Button
+        android:id="@+id/drag"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="drag02" />
 </LinearLayout>

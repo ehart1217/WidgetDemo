@@ -88,6 +88,10 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.MyVi
         notifyDataSetChanged();
     }
 
+    public ArrayList<ImageItem> getImages() {
+        return  mImages;
+    }
+
     class MyViewHolder extends RecyclerView.ViewHolder {
         private ImageView iv_thumb;
 

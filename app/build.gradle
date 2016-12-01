@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 24
+    compileSdkVersion 23
     buildToolsVersion "25.0.0"
     defaultConfig {
         applicationId "com.example.wanchi.myapplication"
@@ -36,6 +36,14 @@ dependencies {
     compile 'com.android.support:support-v4:24.1.0'
     compile 'com.android.support:recyclerview-v7:24.0.0'
 
+    compile 'com.github.chrisbanes.photoview:library:1.2.4'
     //bugly 其中latest.release指代最新Bugly SDK版本号，也可以指定明确的版本号，例如2.2.0
     compile 'com.tencent.bugly:crashreport:latest.release'
+
+    compile ('com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:0.10.0@aar'){
+        transitive=true
+    }
+
+
+    compile 'com.yanzhenjie:recyclerview-swipe:1.0.2'
 }

@@ -11,4 +11,5 @@
             <enum name="circle" value="1"/>
         </attr>
     </declare-styleable>
+
 </resources>

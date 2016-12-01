@@ -47,10 +47,15 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppThemeFullScreenWhite">
         </activity>
+        <activity android:name=".gallery.imagepreview.ImagePreviewDelActivity"></activity>
 
         <!--gridActivity-->
         <activity android:name=".widget.GridActivity"/>
 
+        <!--******** mydrag   *************-->
+        <activity android:name=".drag02.DragMain"/>
+        <activity android:name=".drag02.DragListActivity"/>
+        <activity android:name=".drag02.DragGridActivity"/>
     </application>
 
 </manifest>
