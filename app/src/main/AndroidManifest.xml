@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.wanchi.myapplication">
+          package="com.example.wanchi.myapplication">
     <!--android:sharedUserId="android.uid.system">-->
 
     <!--<uses-permission android:name="android.permission.BIND_APPWIDGET" />-->
@@ -23,8 +23,8 @@
 
         <activity android:name=".MainActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
@@ -40,14 +40,16 @@
         </activity>
         <!--******** Widget   *************-->
         <activity android:name=".widget.WidgetMainActivity"></activity>
-        <activity android:name=".widget.ChooseWidgetActivity" />
+        <activity android:name=".widget.ChooseWidgetActivity"/>
         <!--******** photopicker   *************-->
         <activity
             android:name=".gallery.photopicker.ImageGridActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppThemeFullScreenWhite">
         </activity>
-        <activity android:name=".gallery.imagepreview.ImagePreviewDelActivity"></activity>
+        <activity
+            android:name=".gallery.imagepreview.ImagePreviewDelActivity"
+            android:theme="@style/AppThemeFullScreen"></activity>
 
         <!--gridActivity-->
         <activity android:name=".widget.GridActivity"/>

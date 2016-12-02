@@ -13,13 +13,16 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.wanchi.myapplication.R;
+import com.example.wanchi.myapplication.WidgetApplication;
 import com.example.wanchi.myapplication.gallery.adapter.CardAdapter;
 import com.example.wanchi.myapplication.gallery.photopicker.ImageGridActivity;
+import com.example.wanchi.myapplication.gallery.photopicker.bean.ImageItem;
 
 
 public class CardLockFragment extends BaseCardFragment implements View.OnClickListener {
 
     public static final int REQUEST_CODE_PREVIEW = 101;
+    private static final int RESULT_CODE_PREVIEW = 2001;
 
     private ImageView imageView;
     private Button set_lockpage_btn;
@@ -106,15 +109,17 @@ public class CardLockFragment extends BaseCardFragment implements View.OnClickLi
 //        }
 
         //v1 直接显示
-//        if (requestCode == REQUEST_CODE_PREVIEW && resultCode == 10001) {1其
-//            ImageItem imageItem = (ImageItem) data.getSerializableExtra("imageItem");
-//            String path = imageItem.path;
-//            String type = imageItem.mimeType;
-//            if (type.equals("type_res"))
-//                Glide.with(this).load(Integer.parseInt(imageItem.path)).into(imageView);
-//            else
-//                Glide.with(this).load(path).into(imageView);
-//        }
-//        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_PREVIEW && RESULT_CODE_PREVIEW == resultCode) {
+            ImageItem imageItem = WidgetApplication.getInstance().getImageItem();
+            String path = imageItem.path;
+            String type = imageItem.mimeType;
+            if (null != path && null != type) {
+                if (type.equals("type_res"))
+                    Glide.with(this).load(Integer.parseInt(imageItem.path)).into(imageView);
+                else
+                    Glide.with(this).load(path).into(imageView);
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

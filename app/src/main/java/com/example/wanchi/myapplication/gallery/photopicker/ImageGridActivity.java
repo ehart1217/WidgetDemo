@@ -43,7 +43,8 @@ public class ImageGridActivity extends AppCompatActivity implements ImageDataSou
     private TextView tv_des;
     private ImageView btn_back;
 
-    public static final int REQUEST_CODE_PREVIEW = 101;
+    private static final int RESULT_CODE_PREVIEW = 2001;
+    public static final int REQUEST_CODE_PREVIEW = 1001;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -107,6 +108,7 @@ public class ImageGridActivity extends AppCompatActivity implements ImageDataSou
         }
     }
 
+
     @Override
     public void onImageItemClick(View view, ImageItem imageItem, int position) {
         //v1 直接显示
@@ -121,6 +123,15 @@ public class ImageGridActivity extends AppCompatActivity implements ImageDataSou
         intentPreview.putExtra(ImagePicker.EXTRA_IMAGE_ITEMS, (ArrayList<ImageItem>) mImageGridAdapter.getImages());
         intentPreview.putExtra(ImagePicker.EXTRA_SELECTED_IMAGE_POSITION, position);
         startActivityForResult(intentPreview, REQUEST_CODE_PREVIEW);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE_PREVIEW) {
+            setResult(RESULT_CODE_PREVIEW);
+            finish();
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override

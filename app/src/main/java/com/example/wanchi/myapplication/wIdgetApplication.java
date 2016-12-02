@@ -2,6 +2,7 @@ package com.example.wanchi.myapplication;
 
 import android.app.Application;
 
+import com.example.wanchi.myapplication.gallery.photopicker.bean.ImageItem;
 import com.tencent.bugly.crashreport.CrashReport;
 
 /**
@@ -14,6 +15,8 @@ public class WidgetApplication extends Application {
 
     int mRectHeight = 0;
 
+    private ImageItem mImageItem;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -24,8 +27,7 @@ public class WidgetApplication extends Application {
     }
 
 
-    public static WidgetApplication getInstance()
-    {
+    public static WidgetApplication getInstance() {
         return mInstance;
     }
 
@@ -38,11 +40,20 @@ public class WidgetApplication extends Application {
     }
 
 
-    public  void setRectHeight(int rectHeight) {
+    public void setRectHeight(int rectHeight) {
         mRectHeight = rectHeight;
     }
 
-    public  int getRectHeight() {
+    public int getRectHeight() {
         return mRectHeight;
+    }
+
+
+    public void setImageItem(ImageItem imageItem) {
+        mImageItem = imageItem;
+    }
+
+    public ImageItem getImageItem() {
+        return mImageItem;
     }
 }

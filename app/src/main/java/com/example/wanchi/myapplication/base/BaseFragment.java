@@ -18,7 +18,7 @@ public abstract class BaseFragment extends Fragment implements IDataSwitch {
     @Override
     @CallSuper
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        InfoClient.getClient().register(this);
+        //InfoClient.getClient().register(this);
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 }
