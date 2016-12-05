@@ -18,7 +18,7 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 
-import com.example.wanchi.myapplication.utils.DensityUtil;
+import com.example.wanchi.myapplication.widget.utils.DensityUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
